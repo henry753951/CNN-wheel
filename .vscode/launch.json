@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Test Conv2D",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/tests/test_conv2d.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: Test Model",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/tests/test_model.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

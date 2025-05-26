@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build PyTorch Extension",
+            "type": "shell",
+            "command": "make build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Test Conv2D",
+            "type": "shell",
+            "command": "make test-conv",
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}
