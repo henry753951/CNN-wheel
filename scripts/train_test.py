@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn.functional as F
-from models.custom_conv2d import CustomConv2d
+from python.CUDA.base_cconv2d import Cconv2d
 from models.baseline_model import Net
 import time
 
@@ -27,9 +27,9 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False, 
 class CustomNet(nn.Module):
     def __init__(self):
         super(CustomNet, self).__init__()
-        self.conv1 = CustomConv2d(3, 6, 5)
+        self.conv1 = Cconv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = CustomConv2d(6, 16, 5)
+        self.conv2 = Cconv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)

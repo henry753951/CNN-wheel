@@ -17,6 +17,11 @@
             "command": "make test-conv",
             "group": "test",
             "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "make clean",
         }
     ]
 }
