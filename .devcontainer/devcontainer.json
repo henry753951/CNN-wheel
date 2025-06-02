@@ -20,7 +20,8 @@
                 "ms-vscode.cpptools-extension-pack",
                 "actboy168.tasks",
                 "ms-python.python",
-                "charliermarsh.ruff"
+                "charliermarsh.ruff",
+                "tamasfe.even-better-toml"
             ],
             "settings": {
                 "git.useIntegratedAskPass": true

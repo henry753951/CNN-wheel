@@ -1,14 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-import torch.optim as optim
+
 
 # 定義 CNN 架構
 class SimpleCNN(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
@@ -17,8 +18,8 @@ class SimpleCNN(nn.Module):
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))  
-        x = self.pool(F.relu(self.conv2(x)))  
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
         x = self.dropout(x)
         x = x.view(-1, 64 * 8 * 8)
         x = F.relu(self.fc1(x))
@@ -44,7 +45,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # 訓練模型
-for epoch in range(200):  
+for epoch in range(200):
     running_loss = 0.0
     model.train()
     for images, labels in trainloader:

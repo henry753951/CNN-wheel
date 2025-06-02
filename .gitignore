@@ -31,8 +31,15 @@
 *.out
 *.app
 
-
+# Build directories
 *.egg-info
+*.egg
 build/
+dist
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Datasets
 data/
-./custom_cnn/

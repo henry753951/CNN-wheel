@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools", "torch"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "custom_cnn"
+version = "0.1.0"
+dependencies = ["torch"]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pytest", "pybind11-stubgen"]
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # Line too long (relaxed due to line-length=120)
+    "F401", # Unused imports (less strict for prototyping)
+    "E402", # Module level import not at top (allow flexibility)
+    "W191", # Tabs vs spaces (relaxed for mixed indentation)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
