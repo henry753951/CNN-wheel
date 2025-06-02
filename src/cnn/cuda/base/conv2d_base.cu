@@ -78,6 +78,9 @@ torch::Tensor conv2d(torch::Tensor input, torch::Tensor weight, torch::Tensor bi
     output += bias.view({1, out_channels, 1, 1});
     return output;
 }
+// 在 conv2d_base.cu 中
+torch::Tensor conv2d_forward(torch::Tensor input, torch::Tensor weight);
+
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {

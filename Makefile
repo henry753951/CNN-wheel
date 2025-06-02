@@ -16,6 +16,10 @@ clean:
 test-conv:
 	python3 -m unittest scripts/tests/test_conv2d.py
 
+train-test:
+	python3 scripts/train_test.py
+
+
 # 運行所有測試
 test: test-conv test-model
 
