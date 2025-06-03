@@ -73,7 +73,8 @@ make build
 ```
 ## 包裝上面動態連結的 Function 成為 nn.Module class
 ### 1. 撰寫 Module
-在 `cnn_module/cuda/base/conv2d.py` 中撰寫新的 Module，繼承自 `nn.Module`。
+在 `cnn_module/cuda/base/conv2d.py` 中撰寫新的 Module，繼承自 `nn.Module`。  
+用意是想說 FFT 或 Img2Col 搞不好有額外的參數需要設定，用個 class 可以把參數和 function 綁在一起
 ```python
 import torch
 from torch import nn
