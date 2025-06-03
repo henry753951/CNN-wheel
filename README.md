@@ -1,6 +1,6 @@
 # CNN-wheel
 ```
-# 手動將 module 引入到 Python 環境中
+# 手動將 module 引入到 Python 環境中，假設跟你說 custom_cnn not found 在手動輸入好了
 export PYTHONPATH=$(pwd):$PYTHONPATH
 ```
 
