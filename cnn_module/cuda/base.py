@@ -1,8 +1,10 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch import Tensor
 
 from cnn_module.base import Conv2dBaseClass
 from custom_cnn.cuda import _base
-
 
 class Conv2d(Conv2dBaseClass):
     def __init__(
@@ -21,5 +23,12 @@ class Conv2d(Conv2dBaseClass):
             padding=padding,
         )
 
+        nn.init.kaiming_uniform_(self.weight, a=0, mode='fan_in', nonlinearity='relu')
+        if self.bias is not None:
+            nn.init.zeros_(self.bias)
+
+
     def forward(self, x: Tensor) -> Tensor:
-        return _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+        out = _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+
+        return out

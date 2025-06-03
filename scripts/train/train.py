@@ -27,7 +27,7 @@ AVAILABLE_CNNs = {
 HYPER_PARAMETERS = {
     "learning_rate": 1e-3,
     "batch_size": 128,
-    "epochs": 10,
+    "epochs": 20,
     "seed": 42,
     "val_split": 0.2,
 }
