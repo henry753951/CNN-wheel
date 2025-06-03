@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
@@ -28,8 +27,5 @@ class Conv2d(Conv2dBaseClass):
         if self.bias is not None:
             nn.init.zeros_(self.bias)
 
-
-    def forward(self, x: Tensor) -> Tensor:
-        out = _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)
-
-        return out
+    def forward(self, x: Tensor):
+        return _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)
