@@ -1,6 +1,6 @@
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import questionary
@@ -23,7 +23,13 @@ AVAILABLE_CNNs = {
     # "Cuda Img2Col": {"class": Conv2dImg2Col, "short_name": "cuda_img2col"},
 }
 
-HYPER_PARAMETERS = {"learning_rate": 0.001, "batch_size": 128, "epochs": 10, "seed": 42, "val_split": 0.2}
+HYPER_PARAMETERS = {
+    "learning_rate": 1e-3,
+    "batch_size": 128,
+    "epochs": 10,
+    "seed": 42,
+    "val_split": 0.2,
+}
 
 
 def set_seed(seed: int):
@@ -47,7 +53,7 @@ def get_user_choices():
     if selected_cnn_name is None:
         exit()
     cnn_short_name = AVAILABLE_CNNs.get(selected_cnn_name, {}).get("short_name", "unknown")
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timestamp = datetime.now(tz=timezone(timedelta(hours=8))).strftime("%Y-%m-%d_%H-%M")
     default_path = f"models/bins/{cnn_short_name}/{timestamp}.pt"
     output_path = questionary.text("請輸入模型儲存路徑：", default=default_path).ask()
     if output_path is None:
