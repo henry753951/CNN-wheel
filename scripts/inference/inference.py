@@ -10,7 +10,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 from cnn_module.cuda.base import Conv2d as Conv2dBase
-
+from cnn_module.cuda.fft import Conv2d as Conv2dFft
 # from cnn_module.cuda.fft import Conv2d as Conv2dFft
 # from cnn_module.cuda.img2col import Conv2d as Conv2dImg2Col
 from models.model import ImageClassifierModel
@@ -18,7 +18,7 @@ from models.model import ImageClassifierModel
 AVAILABLE_CNNs = {
     "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
     "Cuda Base": {"class": Conv2dBase, "short_name": "cuda_base"},
-    # "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
+    "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
     # "Cuda Img2Col": {"class": Conv2dImg2Col, "short_name": "cuda_img2col"},
 }
 

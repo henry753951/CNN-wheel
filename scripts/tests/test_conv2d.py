@@ -7,11 +7,12 @@ from cnn_module.base import Conv2dBaseClass
 
 # List of Conv2d implementations to test
 from cnn_module.cuda.base import Conv2d as Conv2dBase
+from cnn_module.cuda.fft import Conv2d as Conv2dFft
 
 # Filter out None values (for modules that may not exist)
 CONV2D_CLASSES: list[tuple[str, type[Conv2dBaseClass]]] = [
     ("base", Conv2dBase),
-    # ("fft", Conv2dFft),
+    ("fft", Conv2dFft),
 ]
 
 
@@ -74,13 +75,18 @@ def test_conv2d_correctness(input_tensor: Tensor, conv2d_name: str, Conv2d: type
 
 @pytest.mark.parametrize("conv2d_name,Conv2d", CONV2D_CLASSES)
 @pytest.mark.parametrize("stride,padding", [(1, 0), (2, 1), (1, 2)])
-def test_conv2d_parameters(
-    input_tensor: Tensor, conv2d_name: str, Conv2d: type[Conv2dBaseClass], stride: int, padding: int
-) -> None:
+def test_conv2d_parameters(input_tensor: Tensor, conv2d_name: str, Conv2d: type, stride: int, padding: int) -> None:
     """
     測試自定義 Conv2d 的輸出形狀是否符合預期。
     """
-    conv = Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=stride, padding=padding)
+    in_channels = input_tensor.size(1)
+    conv = Conv2d(
+        in_channels=in_channels,
+        out_channels=16,
+        kernel_size=3,
+        stride=stride,
+        padding=padding,
+    )
     conv.to(input_tensor.device)
     output = conv(input_tensor)
     expected_shape = (
