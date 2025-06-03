@@ -6,6 +6,7 @@ from torch import Tensor
 from cnn_module.base import Conv2dBaseClass
 from custom_cnn.cuda import _base
 
+
 class Conv2d(Conv2dBaseClass):
     def __init__(
         self,

@@ -1,4 +1,7 @@
 {
+  "files.associations": {
+    "*.cu": "cuda-cpp"
+  },
   "python.analysis.extraPaths": [
     "./dist"
   ],

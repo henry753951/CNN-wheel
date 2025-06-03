@@ -15,7 +15,7 @@ from cnn_module.cuda.base import Conv2d as Conv2dBase
 
 # from cnn_module.cuda.fft import Conv2d as Conv2dFft
 # from cnn_module.cuda.img2col import Conv2d as Conv2dImg2Col
-from models.model import ImageClassifierModel
+from models.model import ImageClassifierModel, ImageClassifierModelV2
 
 AVAILABLE_CNNs = {
     "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
@@ -27,9 +27,8 @@ AVAILABLE_CNNs = {
 HYPER_PARAMETERS = {
     "learning_rate": 1e-3,
     "batch_size": 128,
-    "epochs": 20,
+    "epochs": 5,
     "seed": 42,
-    "val_split": 0.2,
 }
 
 
@@ -137,21 +136,16 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
     # Prepare dataset and dataloader
     print("📦 正在準備 CIFAR-10 資料集...")
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    full_train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
+    train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
+    val_dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
 
-    val_size = int(len(full_train_dataset) * HYPER_PARAMETERS["val_split"])
-    train_size = len(full_train_dataset) - val_size
-
-    train_dataset, val_dataset = random_split(
-        full_train_dataset, [train_size, val_size], generator=torch.Generator().manual_seed(HYPER_PARAMETERS["seed"])
-    )
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     print(f"\t{len(train_dataset)} 筆訓練資料, {len(val_dataset)} 筆驗證資料")
     print("📦 資料集準備完成！")
 
     # Create model, loss function, and optimizer
-    model = ImageClassifierModel(conv_layer_class=conv_layer_class, num_classes=10).to(device)
+    model = ImageClassifierModelV2(conv_layer_class=conv_layer_class, num_classes=10).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 

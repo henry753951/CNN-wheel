@@ -1,12 +1,13 @@
 #include <torch/extension.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 __global__ void conv2d_kernel(
-    const float* __restrict__ input,
-    const float* __restrict__ weight,
-    const float* __restrict__ bias,
-    float* __restrict__ output,
+    const float *__restrict__ input,
+    const float *__restrict__ weight,
+    const float *__restrict__ bias,
+    float *__restrict__ output,
     int batch_size,
     int in_channels,
     int out_channels,
@@ -19,12 +20,13 @@ __global__ void conv2d_kernel(
     int output_height,
     int output_width)
 {
-    int n = blockIdx.z;       // batch index
-    int c_out = blockIdx.y;   // output channel index
+    int n = blockIdx.z;     // batch index
+    int c_out = blockIdx.y; // output channel index
     int h_out = threadIdx.y + blockIdx.x * blockDim.y;
     int w_out = threadIdx.x;
 
-    if (h_out >= output_height || w_out >= output_width) return;
+    if (h_out >= output_height || w_out >= output_width)
+        return;
 
     float sum = bias ? bias[c_out] : 0.0f;
 
@@ -59,7 +61,6 @@ __global__ void conv2d_kernel(
 
     // Optional ReLU activation
     output[output_idx] = sum;
-
 }
 
 torch::Tensor conv2d(torch::Tensor input, torch::Tensor weight, torch::Tensor bias,
@@ -85,7 +86,7 @@ torch::Tensor conv2d(torch::Tensor input, torch::Tensor weight, torch::Tensor bi
     auto output = torch::zeros({batch_size, out_channels, output_height, output_width},
                                input.options());
 
-    dim3 threads(output_width, 8);  
+    dim3 threads(output_width, 8);
     dim3 blocks((output_height + threads.y - 1) / threads.y, out_channels, batch_size);
 
     conv2d_kernel<<<blocks, threads>>>(
