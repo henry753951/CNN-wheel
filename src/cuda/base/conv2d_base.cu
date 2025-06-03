@@ -9,18 +9,12 @@ conv2d_base_kernel(
     int stride, int padding,
     int output_height, int output_width)
 {
-    // --- 1. 正確的 Thread 索引計算 ---
-    // 每個 thread 負責計算輸出平面上的一個 (h_out, w_out) 點
-    // 這個點需要計算所有 out_channels 的值
     int n = blockIdx.z * blockDim.z + threadIdx.z;     // Batch index
     int h_out = blockIdx.x * blockDim.x + threadIdx.x; // Output height index
     int w_out = blockIdx.y * blockDim.y + threadIdx.y; // Output width index (修正了 BUG #2)
 
-    // 邊界檢查：確保 thread 不會處理到超過 tensor 範圍的記憶體
     if (n < batch_size && h_out < output_height && w_out < output_width)
     {
-        // --- 2. 增加對 out_channels 的迴圈 --- (修正了 BUG #1)
-        // 因為 out_channels 沒有被分配到 grid 維度中，所以我們必須在此手動遍歷
         for (int c_out = 0; c_out < out_channels; ++c_out)
         {
             float sum = bias ? bias[c_out] : 0.0f;
@@ -34,7 +28,6 @@ conv2d_base_kernel(
                         int w_in = w_out * stride - padding + kw;
                         if (h_in >= 0 && h_in < input_height && w_in >= 0 && w_in < input_width)
                         {
-                            // 計算正確的 input 和 weight 索引
                             int input_idx = n * in_channels * input_height * input_width +
                                             c_in * input_height * input_width +
                                             h_in * input_width + w_in;
@@ -46,7 +39,6 @@ conv2d_base_kernel(
                     }
                 }
             }
-            // 計算正確的 output 索引
             int output_idx = n * out_channels * output_height * output_width +
                              c_out * output_height * output_width +
                              h_out * output_width + w_out;

@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -63,10 +64,17 @@ def get_user_choices():
 
 
 def train_one_epoch(
-    model: nn.Module, dataloader: DataLoader, optimizer: optim.Optimizer, criterion: nn.Module, device: torch.device
-):
+    model: nn.Module,
+    dataloader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    criterion: nn.Module,
+    device: torch.device,
+) -> tuple[float, float, float]:
     model.train()
     total_loss, total_correct, total_samples = 0, 0, 0
+
+    start_time = time.time()
+
     pbar = tqdm(dataloader, desc="🚀 Training", leave=False)
     for inputs, labels in pbar:
         inputs, labels = inputs.to(device), labels.to(device)
@@ -81,12 +89,19 @@ def train_one_epoch(
         total_correct += (predicted == labels).sum().item()
         total_samples += labels.size(0)
         pbar.set_postfix(loss=f"{total_loss / total_samples:.4f}", acc=f"{total_correct / total_samples * 100:.2f}%")
-    return total_loss / total_samples, total_correct / total_samples
+
+    end_time = time.time()
+    epoch_duration = end_time - start_time
+
+    return total_loss / total_samples, total_correct / total_samples, epoch_duration
 
 
 def validate_one_epoch(model: nn.Module, dataloader: DataLoader, criterion: nn.Module, device: torch.device):
     model.eval()
     total_loss, total_correct, total_samples = 0, 0, 0
+
+    start_time = time.time()
+
     pbar = tqdm(dataloader, desc="🧐 Validating", leave=False)
     with torch.no_grad():
         for inputs, labels in pbar:
@@ -101,7 +116,11 @@ def validate_one_epoch(model: nn.Module, dataloader: DataLoader, criterion: nn.M
             pbar.set_postfix(
                 loss=f"{total_loss / total_samples:.4f}", acc=f"{total_correct / total_samples * 100:.2f}%"
             )
-    return total_loss / total_samples, total_correct / total_samples
+
+    end_time = time.time()
+    epoch_duration = end_time - start_time
+
+    return total_loss / total_samples, total_correct / total_samples, epoch_duration
 
 
 def train(conv_layer_class: type[nn.Module], save_path: str):
@@ -139,13 +158,16 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
     # Train the model
     for epoch in range(epochs):
         print(f"\n--- Epoch {epoch + 1}/{epochs} ---")
-        train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, criterion, device)
-        val_loss, val_acc = validate_one_epoch(model, val_loader, criterion, device)
 
+        # 修改：接收回傳的時間
+        train_loss, train_acc, train_time = train_one_epoch(model, train_loader, optimizer, criterion, device)
+        val_loss, val_acc, val_time = validate_one_epoch(model, val_loader, criterion, device)
+
+        # 修改：在最終結果中打印時間
         print(
-            f"Epoch {epoch + 1} 結果: "
-            f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc * 100:.2f}% | "
-            f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc * 100:.2f}%"
+            f"Epoch {epoch + 1} 結果: \n"
+            f"    Train -> Loss: {train_loss:.4f}, Acc: {train_acc * 100:.2f}%, Time: {train_time:.2f}s\n"
+            f"    Valid -> Loss: {val_loss:.4f}, Acc: {val_acc * 100:.2f}%, Time: {val_time:.2f}s"
         )
     print("\n🚀 訓練完成！")
 
