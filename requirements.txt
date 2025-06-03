@@ -1,4 +1,4 @@
 pybind11-stubgen
 questionary
 pytest
-tadm
+tqdm
