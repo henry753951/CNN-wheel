@@ -57,7 +57,7 @@ setup(
     ext_modules=[
         CUDAExtension(
             name="custom_cnn.cuda._base",  # 對應 custom_cnn.cuda._base
-            sources=["src/cuda/base/conv2d_base.cu"],
+            sources=["src/cuda/base/module.cu"],
             extra_compile_args=EXTRA_COMPILE_ARGS,
         ),
         CUDAExtension(
@@ -65,11 +65,11 @@ setup(
             sources=["src/cuda/fft/conv2d_fft.cu"],
             extra_compile_args=EXTRA_COMPILE_ARGS,
         ),
-        # CUDAExtension(
-        #     name="custom_cnn.cuda._img2col",  # 對應 custom_cnn.cuda._img2col
-        #     sources=["src/cuda/img2col/conv2d_img2col.cu"],
-        #     extra_compile_args=EXTRA_COMPILE_ARGS,
-        # ),
+        CUDAExtension(
+            name="custom_cnn.cuda._img2col",  # 對應 custom_cnn.cuda._img2col
+            sources=["src/cuda/img2col/conv2d_img2col.cu"],
+            extra_compile_args=EXTRA_COMPILE_ARGS,
+        ),
         # CppExtension(
         #     name="custom_cnn.cpu._base",  # 對應 custom_cnn.cpu._base
         #     sources=["src/cpu/base/conv2d_base.cpp"],
