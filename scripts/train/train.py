@@ -18,9 +18,9 @@ from models.model import ImageClassifierModel
 
 AVAILABLE_CNNs = {
     "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
-    "Cuda Base": {"class": Conv2dBase, "short_name": "base"},
-    # "Cuda FFT": {"class": Conv2dFft, "short_name": "fft"},
-    # "Cuda Img2Col": {"class": Conv2dImg2Col, "short_name": "img2col"},
+    "Cuda Base": {"class": Conv2dBase, "short_name": "cuda_base"},
+    # "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
+    # "Cuda Img2Col": {"class": Conv2dImg2Col, "short_name": "cuda_img2col"},
 }
 
 HYPER_PARAMETERS = {"learning_rate": 0.001, "batch_size": 128, "epochs": 10, "seed": 42, "val_split": 0.2}
