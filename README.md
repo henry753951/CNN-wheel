@@ -171,6 +171,10 @@ AVAILABLE_CNNs = {
 }
 
 ```
+### 2. 執行推論
+```bash
+python3 scripts/inference/inference.py
+```
 
 
 ## Model usage (我已經定義一個可以傳入不同 CNN 的 Model了，所以應該算暫時不用管吧)
