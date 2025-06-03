@@ -1,7 +1,7 @@
 from torch import Tensor
 
-from cnn_methods.base import Conv2dBaseClass
-from custom_cnn.cuda import _base
+from cnn_module.base import Conv2dBaseClass
+from custom_cnn.cuda import _fft
 
 
 class Conv2d(Conv2dBaseClass):
@@ -22,9 +22,4 @@ class Conv2d(Conv2dBaseClass):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        return _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)
-
-
-if __name__ == "__main__":
-    # print function info
-    print(_base.conv2d.__doc__)
+        return _fft.conv2d(x, self.weight, self.bias, self.stride, self.padding)

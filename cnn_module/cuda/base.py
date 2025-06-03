@@ -1,7 +1,7 @@
-from custom_cnn.cuda import _img2col
 from torch import Tensor
 
-from cnn_methods.base import Conv2dBaseClass
+from cnn_module.base import Conv2dBaseClass
+from custom_cnn.cuda import _base
 
 
 class Conv2d(Conv2dBaseClass):
@@ -22,4 +22,4 @@ class Conv2d(Conv2dBaseClass):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        return _img2col.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+        return _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)

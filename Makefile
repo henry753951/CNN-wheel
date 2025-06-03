@@ -7,19 +7,12 @@ export CXX := /usr/bin/g++-11
 
 build: 
 	@echo "Building PyTorch extension..."
-	make uninstall
-	make install
+	chmod +x ./scripts/build.sh
+	./scripts/build.sh
 
 clean:
 	rm -rf build *.so *.egg-info
 
-install:
-	@echo "Installing PyTorch extension..."
-	python3 setup.py install
-
-uninstall:
-	@echo "Uninstalling PyTorch extension..."
-	pip uninstall -y custom-cnn
 
 test-conv:
 	@echo "Running unit tests for conv2d..."

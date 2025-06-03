@@ -19,12 +19,6 @@ rm -rf build *.egg-info
 echo -e "${YELLOW}Building extension into dist/...${NC}"
 python3 setup.py build_ext --build-lib ./
 
-# Ensure package structure for import (create __init__.py files)
-echo -e "${YELLOW}Ensuring package structure in dist/...${NC}"
-mkdir -p custom_cnn/cuda
-touch custom_cnn/__init__.py
-touch custom_cnn/cuda/__init__.py
-
 # Clean up residual files
 echo -e "${YELLOW}Cleaning up residual files...${NC}"
 rm -rf build *.egg-info

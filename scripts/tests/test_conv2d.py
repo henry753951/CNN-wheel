@@ -3,10 +3,10 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from cnn_methods.base import Conv2dBaseClass
+from cnn_module.base import Conv2dBaseClass
 
 # List of Conv2d implementations to test
-from cnn_methods.cuda.base import Conv2d as Conv2dBase
+from cnn_module.cuda.base import Conv2d as Conv2dBase
 
 # Filter out None values (for modules that may not exist)
 CONV2D_CLASSES: list[tuple[str, type[Conv2dBaseClass]]] = [
