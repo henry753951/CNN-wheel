@@ -158,12 +158,8 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
     # Train the model
     for epoch in range(epochs):
         print(f"\n--- Epoch {epoch + 1}/{epochs} ---")
-
-        # 修改：接收回傳的時間
         train_loss, train_acc, train_time = train_one_epoch(model, train_loader, optimizer, criterion, device)
         val_loss, val_acc, val_time = validate_one_epoch(model, val_loader, criterion, device)
-
-        # 修改：在最終結果中打印時間
         print(
             f"Epoch {epoch + 1} 結果: \n"
             f"    Train -> Loss: {train_loss:.4f}, Acc: {train_acc * 100:.2f}%, Time: {train_time:.2f}s\n"

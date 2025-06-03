@@ -12,6 +12,7 @@ build:
 
 clean:
 	rm -rf build *.so *.egg-info
+	rm -rf custom_cnn
 
 
 test-conv:
@@ -19,7 +20,6 @@ test-conv:
 	chmod +x ./scripts/test_conv.sh
 	./scripts/test_conv.sh
 
-test:
-	test-conv
+test: test-conv
 
 all: build test

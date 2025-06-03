@@ -24,11 +24,14 @@ def device() -> torch.device:
 
 @pytest.fixture
 def input_tensor(device: torch.device) -> Tensor:
-    return torch.randn(1, 3, 64, 64, device=device)
+    return torch.randn(1, 7, 64, 64, device=device)
 
 
 @pytest.mark.parametrize("conv2d_name,Conv2d", CONV2D_CLASSES)
 def test_conv2d_correctness(input_tensor: Tensor, conv2d_name: str, Conv2d: type[Conv2dBaseClass]) -> None:
+    """
+    測試自定義 Conv2d 是否與 PyTorch 官方實現的 Conv2d 在相同輸入下產生相同輸出。
+    """
     torch.manual_seed(42)
 
     # Simplified input and parameters
@@ -54,7 +57,7 @@ def test_conv2d_correctness(input_tensor: Tensor, conv2d_name: str, Conv2d: type
         custom_conv.weight.fill_(1.0)
         custom_conv.bias.fill_(0.0)
         reference_conv.weight.copy_(custom_conv.weight)
-        reference_conv.bias.copy_(custom_conv.bias) # type: ignore
+        reference_conv.bias.copy_(custom_conv.bias)  # type: ignore
 
     custom_output = custom_conv(input_tensor)
     reference_output = reference_conv(input_tensor)
@@ -74,6 +77,9 @@ def test_conv2d_correctness(input_tensor: Tensor, conv2d_name: str, Conv2d: type
 def test_conv2d_parameters(
     input_tensor: Tensor, conv2d_name: str, Conv2d: type[Conv2dBaseClass], stride: int, padding: int
 ) -> None:
+    """
+    測試自定義 Conv2d 的輸出形狀是否符合預期。
+    """
     conv = Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=stride, padding=padding)
     conv.to(input_tensor.device)
     output = conv(input_tensor)
@@ -88,6 +94,9 @@ def test_conv2d_parameters(
 
 @pytest.mark.parametrize("conv2d_name,Conv2d", CONV2D_CLASSES)
 def test_conv2d_cpu_error(conv2d_name: str, Conv2d: type[Conv2dBaseClass]) -> None:
+    """
+    測試自定義 Conv2d 在 CPU 上使用時是否會引發錯誤。
+    """
     conv = Conv2d(in_channels=3, out_channels=16, kernel_size=3)
     input_tensor = torch.randn(1, 3, 64, 64)  # CPU tensor
     with pytest.raises(Exception, match="Input must be a CUDA tensor"):
