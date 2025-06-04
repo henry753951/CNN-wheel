@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import Tensor
 
 from cnn_module.base import Conv2dBaseClass
@@ -14,6 +13,7 @@ class Conv2d(Conv2dBaseClass):
         kernel_size: int,
         stride: int = 1,
         padding: int = 0,
+        use_shared_memory: bool = False,
     ) -> None:
         super().__init__(
             in_channels=in_channels,
@@ -22,10 +22,12 @@ class Conv2d(Conv2dBaseClass):
             stride=stride,
             padding=padding,
         )
-
+        self.use_shared_memory = use_shared_memory
         nn.init.kaiming_uniform_(self.weight, a=0, mode='fan_in', nonlinearity='relu')
         if self.bias is not None:
             nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
+        if self.use_shared_memory:
+            return _base.conv2d_share(x, self.weight, self.bias, self.stride, self.padding)
         return _base.conv2d(x, self.weight, self.bias, self.stride, self.padding)

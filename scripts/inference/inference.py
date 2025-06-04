@@ -9,21 +9,11 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-from cnn_module.cuda.base import Conv2d as Conv2dBase
-from cnn_module.cuda.fft import Conv2d as Conv2dFft
-# from cnn_module.cuda.fft import Conv2d as Conv2dFft
-# from cnn_module.cuda.img2col import Conv2d as Conv2dImg2Col
+from cnn_methods import AVAILABLE_CNNs
 from models.model import ImageClassifierModel
 
-AVAILABLE_CNNs = {
-    "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
-    "Cuda Base": {"class": Conv2dBase, "short_name": "cuda_base"},
-    "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
-    # "Cuda Img2Col": {"class": Conv2dImg2Col, "short_name": "cuda_img2col"},
-}
 
-
-def get_user_model_selection() -> tuple[str, type[nn.Module]]:
+def get_user_model_selection() -> tuple[str, type[nn.Module], dict]:
     selected_cnn_name = questionary.select(
         "請選擇要評估的 CNN 類型：",
         choices=list(AVAILABLE_CNNs.keys()),
@@ -35,6 +25,7 @@ def get_user_model_selection() -> tuple[str, type[nn.Module]]:
 
     cnn_info = AVAILABLE_CNNs[selected_cnn_name]
     conv_layer_class = cnn_info["class"]
+    args = cnn_info.get("args", {})
     model_dir = Path(f"models/bins/{cnn_info['short_name']}")
 
     if not model_dir.exists() or not any(model_dir.iterdir()):
@@ -56,10 +47,10 @@ def get_user_model_selection() -> tuple[str, type[nn.Module]]:
         print("操作已取消。")
         exit()
 
-    return selected_model_path, conv_layer_class
+    return selected_model_path, conv_layer_class, args
 
 
-def evaluate(model_path: str, conv_layer_class: type[nn.Module]) -> None:
+def evaluate(model_path: str, conv_layer_class: tuple[type[nn.Module], dict]) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n將使用裝置: {device}")
 
@@ -113,5 +104,5 @@ def evaluate(model_path: str, conv_layer_class: type[nn.Module]) -> None:
 
 
 if __name__ == "__main__":
-    model_to_evaluate, selected_conv_class = get_user_model_selection()
-    evaluate(model_to_evaluate, selected_conv_class)
+    model_to_evaluate, selected_conv_class, args = get_user_model_selection()
+    evaluate(model_to_evaluate, (selected_conv_class, args))

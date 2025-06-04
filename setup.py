@@ -46,6 +46,7 @@ class BuildExtensionWithStubs(BuildExtension):
                 )
 
 
+os.environ["TORCH_USE_CUDA_DSA"] = "1"  # Enable CUDA DSA (Dynamic Parallelism) for better performance
 EXTRA_COMPILE_ARGS = {
     "cxx": ["-O2", "-std=c++17"],
     "nvcc": ["-O2", "--expt-relaxed-constexpr", "--use_fast_math"],
@@ -60,21 +61,21 @@ setup(
             sources=["src/cuda/base/module.cu"],
             extra_compile_args=EXTRA_COMPILE_ARGS,
         ),
-        CUDAExtension(
-            name="custom_cnn.cuda._fft",  # 對應 custom_cnn.cuda._fft
-            sources=["src/cuda/fft/conv2d_fft.cu"],
-            extra_compile_args=EXTRA_COMPILE_ARGS,
-        ),
-        CUDAExtension(
-            name="custom_cnn.cuda._img2col",  # 對應 custom_cnn.cuda._img2col
-            sources=["src/cuda/img2col/conv2d_img2col.cu"],
-            extra_compile_args=EXTRA_COMPILE_ARGS,
-        ),
-        # CppExtension(
-        #     name="custom_cnn.cpu._base",  # 對應 custom_cnn.cpu._base
-        #     sources=["src/cpu/base/conv2d_base.cpp"],
+        # CUDAExtension(
+        #     name="custom_cnn.cuda._fft",  # 對應 custom_cnn.cuda._fft
+        #     sources=["src/cuda/fft/conv2d_fft.cu"],
         #     extra_compile_args=EXTRA_COMPILE_ARGS,
         # ),
+        # CUDAExtension(
+        #     name="custom_cnn.cuda._img2col",  # 對應 custom_cnn.cuda._img2col
+        #     sources=["src/cuda/img2col/conv2d_img2col.cu"],
+        #     extra_compile_args=EXTRA_COMPILE_ARGS,
+        # ),
+        CppExtension(
+            name="custom_cnn.cpu._base",  # 對應 custom_cnn.cpu._base
+            sources=["src/cpu/base/conv2d_base.cpp"],
+            extra_compile_args=EXTRA_COMPILE_ARGS,
+        ),
     ],
     cmdclass={"build_ext": BuildExtensionWithStubs},
     package_data={

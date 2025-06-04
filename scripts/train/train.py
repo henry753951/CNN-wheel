@@ -12,29 +12,16 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-from cnn_module.cuda.base import Conv2d as Conv2dBase
-from cnn_module.cuda.fft import Conv2d as Conv2dFft
-from cnn_module.cuda.img2col import Conv2d as Conv2dImg2col
+from cnn_methods import AVAILABLE_CNNs
 from models.model import ImageClassifierModel, ImageClassifierModelV2
 
-AVAILABLE_CNNs = {
-    "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
-    "Cuda Base": {"class": Conv2dBase, "short_name": "cuda_base"},
-    "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
-    "Cuda Img2Col": {"class": Conv2dImg2col, "short_name": "cuda_img2col"},
-}
-
 HYPER_PARAMETERS = {
-    "learning_rate": {
-        "initial_lr": 1e-3,
-        "min_lr": 1e-5,
-        "factor": 0.5,
-        "patience": 2
-    },
+    "learning_rate": {"initial_lr": 1e-3, "min_lr": 1e-5, "factor": 0.5, "patience": 2},
     "batch_size": 64,
     "epochs": 10,
     "seed": 42,
 }
+
 
 def set_seed(seed: int):
     random.seed(seed)
@@ -44,6 +31,7 @@ def set_seed(seed: int):
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
 
 def get_user_choices():
     if not AVAILABLE_CNNs:
@@ -56,13 +44,15 @@ def get_user_choices():
     if selected_cnn_name is None:
         exit()
     cnn_short_name = AVAILABLE_CNNs.get(selected_cnn_name, {}).get("short_name", "unknown")
+    args = AVAILABLE_CNNs.get(selected_cnn_name, {}).get("args", {})
     timestamp = datetime.now(tz=timezone(timedelta(hours=8))).strftime("%Y-%m-%d_%H-%M")
     default_path = f"models/bins/{cnn_short_name}/{timestamp}.pt"
     output_path = questionary.text("請輸入模型儲存路徑：", default=default_path).ask()
     if output_path is None:
         print("操作已取消。")
         exit()
-    return selected_cnn_name, output_path
+    return (selected_cnn_name, output_path, args)
+
 
 def train_one_epoch(
     model: nn.Module,
@@ -96,6 +86,7 @@ def train_one_epoch(
 
     return total_loss / total_samples, total_correct / total_samples, epoch_duration
 
+
 def validate_one_epoch(model: nn.Module, dataloader: DataLoader, criterion: nn.Module, device: torch.device):
     model.eval()
     total_loss, total_correct, total_samples = 0, 0, 0
@@ -122,10 +113,9 @@ def validate_one_epoch(model: nn.Module, dataloader: DataLoader, criterion: nn.M
 
     return total_loss / total_samples, total_correct / total_samples, epoch_duration
 
-def train(conv_layer_class: type[nn.Module], save_path: str):
+
+def train(conv_layer_class: tuple[type[nn.Module], dict], save_path: str, is_cpu: bool = False):
     set_seed(HYPER_PARAMETERS["seed"])
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"\t將使用裝置: {device}")
 
     # Set hyperparameters
     initial_lr = HYPER_PARAMETERS["learning_rate"]["initial_lr"]
@@ -134,7 +124,9 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
     patience = HYPER_PARAMETERS["learning_rate"]["patience"]
     batch_size = HYPER_PARAMETERS["batch_size"]
     epochs = HYPER_PARAMETERS["epochs"]
-    print(f"\tinitial_lr={initial_lr}, min_lr={min_lr}, factor={factor}, patience={patience}, batch_size={batch_size}, epochs={epochs}")
+    print(
+        f"\tinitial_lr={initial_lr}, min_lr={min_lr}, factor={factor}, patience={patience}, batch_size={batch_size}, epochs={epochs}"
+    )
 
     # Prepare dataset and dataloader
     print("📦 正在準備 CIFAR-10 資料集...")
@@ -148,11 +140,21 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
     print("📦 資料集準備完成！")
 
     # Create model, loss function, optimizer, and scheduler
+
+    if is_cpu:
+        print("🔄 將模型轉換為 CPU 模式...")
+        device = torch.device("cpu")
+    else:
+        print("🔄 將模型轉換為 CUDA 模式...")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model = ImageClassifierModel(conv_layer_class=conv_layer_class, num_classes=10).to(device)
+    print(f"\t將使用裝置: {device}")
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=factor, patience=patience, min_lr=min_lr
+        optimizer, mode="min", factor=factor, patience=patience, min_lr=min_lr
     )
 
     # Initialize metrics storage
@@ -163,7 +165,7 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
         print(f"\n--- Epoch {epoch + 1}/{epochs} ---")
         train_loss, train_acc, train_time = train_one_epoch(model, train_loader, optimizer, criterion, device)
         val_loss, val_acc, val_time = validate_one_epoch(model, val_loader, criterion, device)
-        current_lr = optimizer.param_groups[0]['lr']
+        current_lr = optimizer.param_groups[0]["lr"]
         print(
             f"Epoch {epoch + 1} 結果: \n"
             f"    Train -> Loss: {train_loss:.4f}, Acc: {train_acc * 100:.2f}%, Time: {train_time:.2f}s\n"
@@ -181,7 +183,7 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
                 "val_loss": val_loss,
                 "val_accuracy": val_acc,
                 "val_time": val_time,
-                "learning_rate": current_lr
+                "learning_rate": current_lr,
             }
         )
 
@@ -201,8 +203,9 @@ def train(conv_layer_class: type[nn.Module], save_path: str):
         json.dump(metrics, f, indent=4)
     print(f"📊 訓練數據已儲存至: {metrics_path}")
 
+
 if __name__ == "__main__":
-    cnn_name, model_save_path = get_user_choices()
+    cnn_name, model_save_path, args = get_user_choices()
     selected_conv_class = AVAILABLE_CNNs[cnn_name]["class"]
     print(f"\n🚀 開始訓練，使用: {cnn_name}")
-    train(selected_conv_class, model_save_path)
+    train((selected_conv_class, args), model_save_path, is_cpu="CPU" in cnn_name)
