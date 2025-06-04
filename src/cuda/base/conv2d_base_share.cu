@@ -4,23 +4,23 @@
 #include <vector>
 #include <c10/cuda/CUDAException.h>
 
-// Forward pass kernel (Revised for easier debugging with DSA)
-__global__ void conv2d_forward_kernel_share( // Renamed for clarity
+// Forward pass kernel
+__global__ void conv2d_forward_kernel_share(
     const float *__restrict__ input,
     const float *__restrict__ weight,
     const float *__restrict__ bias,
     float *__restrict__ output,
-    int batch_size,    // Host should ensure > 0
-    int in_channels,   // Host should ensure > 0
-    int out_channels,  // Host should ensure > 0
-    int input_height,  // Host should ensure > 0
-    int input_width,   // Host should ensure > 0
-    int kernel_height, // Host should ensure > 0
-    int kernel_width,  // Host should ensure > 0
-    int stride,        // Host should ensure > 0
-    int padding,       // Host should ensure >= 0
-    int output_height, // Host should ensure > 0
-    int output_width)  // Host should ensure > 0
+    int batch_size,
+    int in_channels,
+    int out_channels,
+    int input_height,
+    int input_width,
+    int kernel_height,
+    int kernel_width,
+    int stride,
+    int padding,
+    int output_height,
+    int output_width)
 {
     // Dynamic shared memory
     extern __shared__ float s_data[];
@@ -28,14 +28,8 @@ __global__ void conv2d_forward_kernel_share( // Renamed for clarity
     // Tile dimensions from blockDim
     const int TILE_OH = blockDim.y;
     const int TILE_OW = blockDim.x;
-    // Assert that block dimensions are valid (CUDA runtime usually catches this, but for completeness)
-    // These asserts are more for documentation/understanding within the kernel.
-    // Realistically, if blockDim is 0, the kernel launch itself would likely fail.
-    // assert(TILE_OH > 0 && TILE_OW > 0);
 
-    // Shared memory size calculations
-    // Host MUST ensure kernel_height, kernel_width, stride are > 0
-    // Assertions here will catch issues if host validation failed AND DSA is on.
+    // Assertions for tile dimensions
     assert(kernel_height > 0);
     assert(kernel_width > 0);
     assert(stride > 0);
@@ -43,11 +37,8 @@ __global__ void conv2d_forward_kernel_share( // Renamed for clarity
     const int SHARED_INPUT_HEIGHT = (TILE_OH - 1) * stride + kernel_height;
     const int SHARED_INPUT_WIDTH = (TILE_OW - 1) * stride + kernel_width;
 
-    // Critical check for preventing division by zero and invalid shared mem array dimensions
     if (SHARED_INPUT_WIDTH <= 0 || SHARED_INPUT_HEIGHT <= 0)
     {
-        // Using assert(false) can help pinpoint this if DSA is on
-        // assert(!"SHARED_INPUT_WIDTH or SHARED_INPUT_HEIGHT is zero or negative!");
         return;
     }
 
@@ -197,10 +188,8 @@ __global__ void conv2d_forward_kernel_share( // Renamed for clarity
     // 5. Write from s_output_ptr to global output
     if (h_out_global < output_height && w_out_global < output_width)
     {
-        // Assert global write index bounds (components)
         assert(n >= 0 && n < batch_size);
         assert(c_out >= 0 && c_out < out_channels);
-        // h_out_global and w_out_global are checked by the if condition
 
         int output_idx = n * out_channels * output_height * output_width +
                          c_out * output_height * output_width +
@@ -229,8 +218,6 @@ __global__ void conv2d_grad_input_kernel_share(
     int output_height,
     int output_width)
 {
-
-    // Each thread computes one element of grad_input
     int w_in = blockIdx.x * blockDim.x + threadIdx.x;
     int h_in = blockIdx.y * blockDim.y + threadIdx.y;
     int c_in = blockIdx.z % in_channels;
@@ -261,7 +248,6 @@ __global__ void conv2d_grad_input_kernel_share(
                                               c_out * output_height * output_width +
                                               h_out * output_width + w_out;
 
-                        // This is a transposed convolution, so kernel weights are flipped
                         int weight_idx = c_out * in_channels * kernel_height * kernel_width +
                                          c_in * kernel_height * kernel_width +
                                          kh * kernel_width + kw;
@@ -411,7 +397,6 @@ public:
         );
 
         // Calculate shared memory size in bytes
-        // These calculations MUST match the logic inside your CUDA kernel
         const int SHARED_INPUT_HEIGHT_host = (TILE_OH - 1) * stride + kernel_height;
         const int SHARED_INPUT_WIDTH_host = (TILE_OW - 1) * stride + kernel_width;
         const int SHARED_INPUT_SIZE_FLOATS_host = SHARED_INPUT_HEIGHT_host * SHARED_INPUT_WIDTH_host;
@@ -423,9 +408,7 @@ public:
                                      SHARED_OUTPUT_SIZE_FLOATS_host;
         size_t shared_memory_in_bytes = total_shared_floats * sizeof(float);
 
-        // Launch the kernel
-        // Ensure your kernel is named conv2d_forward_kernel or conv2d_forward_kernel_debuggable
-        conv2d_forward_kernel_share<<<blocks, threads, shared_memory_in_bytes>>>( // Or your actual kernel name
+        conv2d_forward_kernel_share<<<blocks, threads, shared_memory_in_bytes>>>(
             input.data_ptr<float>(),
             weight.data_ptr<float>(),
             bias.defined() ? bias.data_ptr<float>() : nullptr,
@@ -433,10 +416,10 @@ public:
             batch_size, in_channels, out_channels,
             input_height, input_width,
             kernel_height, kernel_width,
-            stride, padding, // Pass the int versions
+            stride, padding,
             output_height, output_width);
 
-        C10_CUDA_KERNEL_LAUNCH_CHECK(); // Checks for errors from the kernel launch/execution
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
 
         return output;
     }
