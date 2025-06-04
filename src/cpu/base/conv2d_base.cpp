@@ -75,16 +75,15 @@ void conv2d_forward_cpu(
 
 // 反向傳播 - 計算輸入梯度 (Backward - Gradient w.r.t. Input)
 void conv2d_grad_input_cpu(
-    const float *grad_output, // 輸出梯度
-    const float *weight,      // 權重張量
-    float *grad_input,        // 輸入梯度
+    const float *grad_output,
+    const float *weight,
+    float *grad_input,
     int batch_size, int in_channels, int out_channels,
     int input_height, int input_width,
     int kernel_height, int kernel_width,
     int stride, int padding,
     int output_height, int output_width)
 {
-    // grad_input 已由 torch::zeros_like 初始化為 0，無需 memset
     for (int n = 0; n < batch_size; ++n)
     {
         for (int c_in = 0; c_in < in_channels; ++c_in)
@@ -142,7 +141,7 @@ void conv2d_grad_input_cpu(
     }
 }
 
-// 反向傳播 - 計算權重和偏置梯度 (Backward - Gradient w.r.t. Weight and Bias)
+// 反向傳播 - 計算權重和偏置梯度
 void conv2d_grad_weight_bias_cpu(
     const float *grad_output,
     const float *input,
@@ -154,7 +153,6 @@ void conv2d_grad_weight_bias_cpu(
     int stride, int padding,
     int output_height, int output_width)
 {
-    // grad_weight 和 grad_bias 已由 torch::zeros_like 初始化為 0，無需 memset
 
     // 計算權重梯度
     for (int c_out = 0; c_out < out_channels; ++c_out)
@@ -197,7 +195,6 @@ void conv2d_grad_weight_bias_cpu(
         }
     }
 
-    // 計算偏置梯度 (如果需要)
     if (grad_bias)
     {
         for (int c_out = 0; c_out < out_channels; ++c_out)
@@ -220,7 +217,6 @@ void conv2d_grad_weight_bias_cpu(
     }
 }
 
-// Autograd 函數定義
 class MyConv2dFunction : public torch::autograd::Function<MyConv2dFunction>
 {
 public:
@@ -242,7 +238,6 @@ public:
             TORCH_CHECK(bias.is_cpu(), "Bias must be a CPU tensor");
         }
 
-        // 確保張量在記憶體中是連續的，以便 data_ptr() 操作
         input = input.contiguous();
         weight = weight.contiguous();
         if (bias.defined())
@@ -250,7 +245,6 @@ public:
             bias = bias.contiguous();
         }
 
-        // 提取尺寸
         const int batch_size = input.size(0);
         const int in_channels = input.size(1);
         const int input_height = input.size(2);
@@ -266,10 +260,8 @@ public:
             TORCH_CHECK(bias.size(0) == out_channels, "Bias size must match out_channels");
         }
 
-        // 分配輸出張量
         auto output = torch::empty({batch_size, out_channels, output_height, output_width}, input.options());
 
-        // 執行前向傳播
         conv2d_forward_cpu(
             input.data_ptr<float>(),
             weight.data_ptr<float>(),
@@ -312,7 +304,6 @@ public:
         const int output_height = grad_output.size(2);
         const int output_width = grad_output.size(3);
 
-        // 分配梯度張量 (torch::zeros_like 會將其初始化為 0)
         auto grad_input = torch::zeros_like(input);
         auto grad_weight = torch::zeros_like(weight);
         auto grad_bias = bias.defined() ? torch::zeros_like(bias) : torch::Tensor();
@@ -340,13 +331,10 @@ public:
             stride, padding,
             output_height, output_width);
 
-        // 返回的梯度必須與 forward 的輸入一一對應
-        // stride 和 padding 不需要梯度，所以返回空 Tensor
         return {grad_input, grad_weight, grad_bias, torch::Tensor(), torch::Tensor()};
     }
 };
 
-// Python 接口函數
 torch::Tensor conv2d(
     torch::Tensor input,
     torch::Tensor weight,
@@ -357,13 +345,12 @@ torch::Tensor conv2d(
     return MyConv2dFunction::apply(input, weight, bias, stride, padding);
 }
 
-// 模組定義 (Python Binding)
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
     m.def("conv2d", &conv2d, "A custom CPU-based Conv2d operation (for educational purposes)",
           py::arg("input"),
           py::arg("weight"),
-          py::arg("bias") = torch::Tensor(), // 使 bias 成為可選參數
+          py::arg("bias") = torch::Tensor(),
           py::arg("stride") = 1,
           py::arg("padding") = 0);
 }

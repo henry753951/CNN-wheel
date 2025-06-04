@@ -22,14 +22,11 @@ __global__ void conv2d_forward_kernel_share(
     int output_height,
     int output_width)
 {
-    // Dynamic shared memory
     extern __shared__ float s_data[];
 
-    // Tile dimensions from blockDim
     const int TILE_OH = blockDim.y;
     const int TILE_OW = blockDim.x;
 
-    // Assertions for tile dimensions
     assert(kernel_height > 0);
     assert(kernel_width > 0);
     assert(stride > 0);
@@ -62,12 +59,7 @@ __global__ void conv2d_forward_kernel_share(
     const int h_tile_idx = blockIdx.y;
     const int n_cout_combined_idx = blockIdx.z;
 
-    // Assertions for block indices (host grid configuration should ensure this)
-    // assert(w_tile_idx * TILE_OW < output_width_or_grid_dim_related_bound); // Hard to get exact bound here
-    // assert(h_tile_idx * TILE_OH < output_height_or_grid_dim_related_bound);
-    // assert(n_cout_combined_idx < batch_size * out_channels_or_grid_dim_z);
-
-    assert(out_channels > 0); // Should be validated by host
+    assert(out_channels > 0);
     const int n = n_cout_combined_idx / out_channels;
     const int c_out = n_cout_combined_idx % out_channels;
 
@@ -107,12 +99,10 @@ __global__ void conv2d_forward_kernel_share(
                 // Assert global read index bounds (components)
                 assert(n >= 0 && n < batch_size);
                 assert(c_in >= 0 && c_in < in_channels);
-                // current_h_in_global and current_w_in_global are already checked by the if
 
                 int input_idx = n * in_channels * input_height * input_width +
                                 c_in * input_height * input_width +
                                 current_h_in_global * input_width + current_w_in_global;
-                // Optional: assert(input_idx >= 0 && input_idx < total_input_elements); // total_input_elements is hard to get here
                 s_input_ptr[s_idx] = input[input_idx];
             }
             else
@@ -195,8 +185,8 @@ __global__ void conv2d_forward_kernel_share(
                          c_out * output_height * output_width +
                          h_out_global * output_width + w_out_global;
 
-        int s_out_idx = ty * TILE_OW + tx;                               // Index for reading from s_output_ptr
-        assert(s_out_idx >= 0 && s_out_idx < SHARED_OUTPUT_SIZE_FLOATS); // Should be valid from write
+        int s_out_idx = ty * TILE_OW + tx; // Index for reading from s_output_ptr
+        assert(s_out_idx >= 0 && s_out_idx < SHARED_OUTPUT_SIZE_FLOATS);
         output[output_idx] = s_output_ptr[s_out_idx];
     }
 }
@@ -283,7 +273,6 @@ __global__ void conv2d_grad_weight_bias_kernel_share(
     int output_height,
     int output_width)
 {
-    // Each thread block computes gradients for one filter weight
     int kw = threadIdx.x;
     int kh = threadIdx.y;
     int c_in = blockIdx.y;
@@ -320,10 +309,8 @@ __global__ void conv2d_grad_weight_bias_kernel_share(
                           c_in * kernel_height * kernel_width +
                           kh * kernel_width + kw;
 
-    // Use atomicAdd to avoid race conditions when multiple threads/blocks update the same weight gradient
     atomicAdd(&grad_weight[grad_weight_idx], sum);
 
-    // For bias, threads in the first input channel and first kernel element compute it
     if (grad_bias && c_in == 0 && kh == 0 && kw == 0)
     {
         float bias_sum = 0.0f;
@@ -384,8 +371,8 @@ public:
 
         auto output = torch::zeros({batch_size, out_channels, output_height, output_width}, input.options());
 
-        const int TILE_OW = 16; // Corresponds to blockDim.x in kernel, processing output width
-        const int TILE_OH = 16; // Corresponds to blockDim.y in kernel, processing output height
+        const int TILE_OW = 16;
+        const int TILE_OH = 16;
         dim3 threads(TILE_OW, TILE_OH);
 
         // Corrected block dimension calculation based on kernel's interpretation:
@@ -504,7 +491,6 @@ torch::Tensor conv2d_share(
     int64_t stride,
     int64_t padding)
 {
-    // Make sure bias is defined, even if it's empty, to pass to the function
     if (!bias.defined())
     {
         bias = torch::empty({0}, input.options());

@@ -24,7 +24,6 @@ __global__ void conv2d_forward_kernel(
 {
     int n = blockIdx.z;     // batch index
     int c_out = blockIdx.y; // output channel index
-    // Note: The grid calculation is slightly different to ensure all output pixels are covered
     int h_out = blockIdx.x * blockDim.y + threadIdx.y;
     int w_out = threadIdx.x;
 
@@ -113,7 +112,7 @@ __global__ void conv2d_grad_input_kernel(
                                               c_out * output_height * output_width +
                                               h_out * output_width + w_out;
 
-                        // This is a transposed convolution, so kernel weights are flipped
+                        // Transposed convolution
                         int weight_idx = c_out * in_channels * kernel_height * kernel_width +
                                          c_in * kernel_height * kernel_width +
                                          kh * kernel_width + kw;
@@ -149,7 +148,6 @@ __global__ void conv2d_grad_weight_bias_kernel(
     int output_height,
     int output_width)
 {
-    // Each thread block computes gradients for one filter weight
     int kw = threadIdx.x;
     int kh = threadIdx.y;
     int c_in = blockIdx.y;
@@ -186,10 +184,8 @@ __global__ void conv2d_grad_weight_bias_kernel(
                           c_in * kernel_height * kernel_width +
                           kh * kernel_width + kw;
 
-    // Use atomicAdd to avoid race conditions when multiple threads/blocks update the same weight gradient
     atomicAdd(&grad_weight[grad_weight_idx], sum);
 
-    // For bias, threads in the first input channel and first kernel element compute it
     if (grad_bias && c_in == 0 && kh == 0 && kw == 0)
     {
         float bias_sum = 0.0f;
@@ -335,8 +331,6 @@ public:
 
         C10_CUDA_KERNEL_LAUNCH_CHECK();
 
-        // Return gradients for input, weight, bias, stride, padding
-        // Gradients for non-tensor inputs (stride, padding) are torch::Tensor()
         return {grad_input, grad_weight, grad_bias, torch::Tensor(), torch::Tensor()};
     }
 };
@@ -349,7 +343,6 @@ torch::Tensor conv2d(
     int64_t stride,
     int64_t padding)
 {
-    // Make sure bias is defined, even if it's empty, to pass to the function
     if (!bias.defined())
     {
         bias = torch::empty({0}, input.options());
