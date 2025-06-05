@@ -9,6 +9,6 @@ AVAILABLE_CNNs = {
     "Official PyTorch": {"class": nn.Conv2d, "short_name": "official"},
     "Cuda Base": {"class": Conv2dBaseCUDA, "short_name": "cuda_base", "args": {"use_shared_memory": False}},
     "CPU Base": {"class": Conv2dBaseCPU, "short_name": "cpu_base"},
-    "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
-    "Cuda Img2Col": {"class": Conv2dImg2col, "short_name": "cuda_img2col"},
+    # "Cuda FFT": {"class": Conv2dFft, "short_name": "cuda_fft"},
+    # "Cuda Img2Col": {"class": Conv2dImg2col, "short_name": "cuda_img2col"},
 }
