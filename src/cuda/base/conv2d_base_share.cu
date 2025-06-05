@@ -38,7 +38,7 @@ __global__ void conv2d_forward_kernel_share(
     {
         return;
     }
-
+    
     const int SHARED_INPUT_SIZE_FLOATS = SHARED_INPUT_HEIGHT * SHARED_INPUT_WIDTH;
     const int SHARED_WEIGHT_SIZE_FLOATS = kernel_height * kernel_width;
     const int SHARED_OUTPUT_SIZE_FLOATS = TILE_OH * TILE_OW;
